@@ -6,106 +6,122 @@ import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
-import java.util.Map;
 import java.util.Objects;
 
 public class ProtoMapper {
     private static final int[] STATES_TO_CHECK = new int[]{0, 1, 66, 256, 500, 3690};
-
+    private static final String STATE_MAP = "mapping-1.17.1.json";
+    private static final String BLOCK_REPORT = "generated/reports/blocks.json";
+    private static final String REGISTRIES_REPORT = "generated/reports/registries.json";
 
     public static void main(String[] args) throws IOException {
+        // * Uncomment this line when you need to generate a new list (1/2)
         //generate();
+
+        // Check a few states
         System.out.println("Checking generated states:");
         for (int state : STATES_TO_CHECK)
             System.out.printf("State [%s] is: %s%n", state, stateToBlock(state));
     }
 
-    private static Gson newGson() {
-        return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    }
 
     public static String stateToBlock(int state) throws IOException {
         return newGson()
-                .fromJson(new String(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream("mapping-1.17.1.json")).readAllBytes()), JsonObject.class)
+                .fromJson(new String(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(STATE_MAP)).readAllBytes()), JsonObject.class)
                 .getAsJsonObject("blockstates")
                 .get(Integer.toString(state))
                 .getAsString();
     }
 
+    // Rewritten from: https://gist.github.com/kennytv/1ee95cd3b8bb57dc8ee8cb71d5a4883e
     public static JsonObject generate() throws IOException {
         System.out.println("Generating reports...\n");
 
-        // Call the vanilla server jar
-        net.minecraft.data.Main.main(new String[]{"--reports"});
+        // * Uncomment this line when you need to generate a new list (2/2)
+        //net.minecraft.data.Main.main(new String[]{"--reports"});
 
-        String content = new String(Files.readAllBytes(new File("generated/reports/blocks.json").toPath()));
-
+        // Create a Gson instance to use throughout generation
         var gson = newGson();
-        JsonObject object = gson.fromJson(content, JsonObject.class);
 
-        final JsonObject viaMappings = new JsonObject();
-        final JsonObject blockstates = new JsonObject();
-        final JsonObject blocks = new JsonObject();
-        viaMappings.add("blockstates", blockstates);
-        viaMappings.add("blocks", blocks);
+        // Read the reports into JSON objects
+        var blockObject = gson.fromJson(new String(Files.readAllBytes(new File(BLOCK_REPORT).toPath())), JsonObject.class);
+        var registriesObject = gson.fromJson(new String(Files.readAllBytes(new File(REGISTRIES_REPORT).toPath())), JsonObject.class);
 
+        // Create all the JSON objects for the Minecraft data
+        var mappings = new JsonObject();
+        var blockStates = new JsonObject();
+        var blocks = new JsonObject();
+        var items = new JsonObject();
+        var sounds = new JsonArray();
+
+        // Add all sub-map objects to the primary map object
+        mappings.add("blockstates", blockStates);
+        mappings.add("blocks", blocks);
+        mappings.add("items", items);
+        mappings.add("sounds", sounds);
+
+        // * Parse block/state information (1/3)
         String lastBlock = "";
         int id = 0;
-        for (final Map.Entry<String, JsonElement> blocksEntry : object.entrySet()) {
-            final JsonObject block = blocksEntry.getValue().getAsJsonObject();
-            final JsonArray states = block.getAsJsonArray("states");
-            for (final JsonElement state : states) {
-                final StringBuilder value = new StringBuilder(blocksEntry.getKey());
+
+        for (var blocksEntry : blockObject.entrySet()) {
+
+            var block = blocksEntry.getValue().getAsJsonObject();
+            var states = block.getAsJsonArray("states");
+
+            for (var state : states) {
+                var value = new StringBuilder(blocksEntry.getKey());
+
                 if (!lastBlock.equals(blocksEntry.getKey())) {
                     lastBlock = blocksEntry.getKey();
                     blocks.add(Integer.toString(id++), new JsonPrimitive(lastBlock.replace("minecraft:", "")));
                 }
+
+                // If this block state has properties, add them to the String
                 if (state.getAsJsonObject().has("properties")) {
                     value.append("[");
-                    final JsonObject properties = state.getAsJsonObject().getAsJsonObject("properties");
+
+                    var properties = state.getAsJsonObject().getAsJsonObject("properties");
                     boolean first = true;
-                    for (final Map.Entry<String, JsonElement> propertyEntry : properties.entrySet()) {
-                        if (first) {
-                            first = false;
-                        } else {
-                            value.append(',');
-                        }
+
+                    for (var propertyEntry : properties.entrySet()) {
+                        if (first) first = false;
+                        else value.append(',');
+
                         value.append(propertyEntry.getKey()).append('=').append(propertyEntry.getValue().getAsJsonPrimitive().getAsString());
                     }
+
                     value.append("]");
                 }
-                blockstates.add(state.getAsJsonObject().get("id").getAsString(), new JsonPrimitive(value.toString()));
+
+                blockStates.add(state.getAsJsonObject().get("id").getAsString(), new JsonPrimitive(value.toString()));
             }
         }
 
-        content = new String(Files.readAllBytes(new File("generated/reports/registries.json").toPath()));
-        object = gson.fromJson(content, JsonObject.class);
-
-        final JsonObject items = new JsonObject();
-        viaMappings.add("items", items);
-
-        for (final Map.Entry<String, JsonElement> itemsEntry : object.getAsJsonObject("minecraft:item").getAsJsonObject("entries").entrySet()) {
+        // * Parse ITEM information (2/3)
+        for (var itemsEntry : registriesObject.getAsJsonObject("minecraft:item").getAsJsonObject("entries").entrySet())
             items.add(String.valueOf(itemsEntry.getValue().getAsJsonObject().getAsJsonPrimitive("protocol_id").getAsInt()), new JsonPrimitive(itemsEntry.getKey()));
-        }
 
-        final JsonArray sounds = new JsonArray();
-        viaMappings.add("sounds", sounds);
-
+        // * Parse SOUND information (3/3)
         int i = 0;
-        for (final Map.Entry<String, JsonElement> soundEntry : object.getAsJsonObject("minecraft:sound_event").getAsJsonObject("entries").entrySet()) {
-            if (soundEntry.getValue().getAsJsonObject().getAsJsonPrimitive("protocol_id").getAsInt() != i) {
+        for (var soundEntry : registriesObject.getAsJsonObject("minecraft:sound_event").getAsJsonObject("entries").entrySet()) {
+            if (soundEntry.getValue().getAsJsonObject().getAsJsonPrimitive("protocol_id").getAsInt() != i)
                 throw new IllegalStateException();
-            }
+
             sounds.add(new JsonPrimitive(soundEntry.getKey().replace("minecraft:", "")));
             i++;
         }
 
-        try (final PrintWriter out = new PrintWriter("src/main/resources/mapping-1.17.1.json")) {
-            out.print(gson.toJson(viaMappings));
+        try (var out = new PrintWriter(String.format("src/main/resources/%s", STATE_MAP))) {
+            out.print(gson.toJson(mappings));
         }
 
         System.out.println("\n\n");
 
-        return viaMappings;
+        return mappings;
+    }
+
+    private static Gson newGson() {
+        return new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     }
 }
