@@ -1,0 +1,39 @@
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'com.github.johnrengelman.shadow' version '7.1.0'
+    id 'io.freefair.lombok' version '6.2.0'
+}
+
+group 'io.ttRMS.ProtoMapper'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation files('libs/minecraft-server-1.17.1.jar')
+
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
+}
+
+jar {
+    manifest {
+        attributes('Main-Class': 'io.ttRMS.ProtoMapper.ProtoMapper')
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
