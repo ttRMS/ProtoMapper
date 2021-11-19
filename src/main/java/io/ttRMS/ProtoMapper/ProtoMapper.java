@@ -7,14 +7,16 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class ProtoMapper {
     private static final int[] STATES_TO_CHECK = new int[]{0, 1, 66, 256, 500, 3690};
     private static final String STATE_MAP = "mapping-1.17.1.json";
+    private static final String TRANSLATE_MAP = "language-map-burger-1.17.1.json";
     private static final String BLOCK_REPORT = "generated/reports/blocks.json";
     private static final String REGISTRIES_REPORT = "generated/reports/registries.json";
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         // * Uncomment this line when you need to generate a new list (1/2)
         //generate();
 
@@ -22,15 +24,41 @@ public class ProtoMapper {
         System.out.println("Checking generated states:");
         for (int state : STATES_TO_CHECK)
             System.out.printf("State [%s] is: %s%n", state, stateToBlock(state));
+
+        System.out.printf(getTranslationFormat("multiplayer.player.joined"), "tycrek");
+        System.out.printf(getTranslationFormat("chat.type.text"), "tycrek", "hello world");
     }
 
+    public static String stateToBlock(int state) {
+        try {
+            return newGson()
+                    .fromJson(readResourceAsJson(STATE_MAP), JsonObject.class)
+                    .getAsJsonObject("blockstates")
+                    .get(Integer.toString(state))
+                    .getAsString();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return "air";
+        }
+    }
 
-    public static String stateToBlock(int state) throws IOException {
-        return newGson()
-                .fromJson(new String(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(STATE_MAP)).readAllBytes()), JsonObject.class)
-                .getAsJsonObject("blockstates")
-                .get(Integer.toString(state))
-                .getAsString();
+    public static String getTranslationFormat(String key) {
+        try {
+            var keyParts = key.split(Pattern.quote("."), 2);
+            return newGson()
+                    .fromJson(readResourceAsJson(TRANSLATE_MAP), JsonObject.class)
+                    .getAsJsonObject("language")
+                    .getAsJsonObject(keyParts[0])
+                    .get(keyParts[1])
+                    .getAsString();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+            return "";
+        }
+    }
+
+    private static String readResourceAsJson(String resource) throws IOException {
+        return new String(Objects.requireNonNull(Thread.currentThread().getContextClassLoader().getResourceAsStream(resource)).readAllBytes());
     }
 
     // Rewritten from: https://gist.github.com/kennytv/1ee95cd3b8bb57dc8ee8cb71d5a4883e
