@@ -1,4 +1,4 @@
-package io.ttRMS.ProtoMapper;
+package io.ttrms.protomapper;
 
 import com.google.gson.*;
 
