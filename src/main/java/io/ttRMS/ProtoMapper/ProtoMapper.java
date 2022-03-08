@@ -16,9 +16,12 @@ public class ProtoMapper {
     private static final String BLOCK_REPORT = "generated/reports/blocks.json";
     private static final String REGISTRIES_REPORT = "generated/reports/registries.json";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         // * Uncomment this line when you need to generate a new list (1/2)
-        //generate();
+        if (args.length > 0 && args[0].equals("generate")) {
+            generate();
+            return;
+        }
 
         // Check a few states
         System.out.println("Checking generated states:");
