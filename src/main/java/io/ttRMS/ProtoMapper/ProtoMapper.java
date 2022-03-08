@@ -50,7 +50,8 @@ public class ProtoMapper {
                     .getAsJsonObject("language")
                     .getAsJsonObject(keyParts[0])
                     .get(keyParts[1])
-                    .getAsString();
+                    .getAsString()
+                    .concat("%n");
         } catch (IOException ex) {
             ex.printStackTrace();
             return "";
@@ -66,7 +67,7 @@ public class ProtoMapper {
         System.out.println("Generating reports...\n");
 
         // * Uncomment this line when you need to generate a new list (2/2)
-        //net.minecraft.data.Main.main(new String[]{"--reports"});
+        //net.minecraft.server.MinecraftServer.main(new String[]{"--reports"});
 
         // Create a Gson instance to use throughout generation
         var gson = newGson();
