@@ -11,8 +11,8 @@ import java.util.regex.Pattern;
 
 public class ProtoMapper {
     private static final int[] STATES_TO_CHECK = new int[]{0, 1, 66, 256, 500, 3690};
-    private static final String STATE_MAP = "mapping-1.17.1.json";
-    private static final String TRANSLATE_MAP = "language-map-burger-1.17.1.json";
+    private static final String STATE_MAP = "mapping-1.12.2.json";
+    private static final String TRANSLATE_MAP = "language-map-burger-1.12.2.json";
     private static final String BLOCK_REPORT = "generated/reports/blocks.json";
     private static final String REGISTRIES_REPORT = "generated/reports/registries.json";
 
