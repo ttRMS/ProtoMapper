@@ -25,6 +25,10 @@ dependencies {
 }
 ```
 
+## Change version
+
+More to come. For now, get your server jars from https://mcversions.net
+
 ## Thanks to
 
 - [@pokechu22] for [Burger] ([source][Burger source])
