@@ -28,8 +28,8 @@ public class ProtoMapper {
         for (int state : STATES_TO_CHECK)
             System.out.printf("State [%s] is: %s%n", state, stateToBlock(state));
 
-        System.out.printf(getTranslationFormat("multiplayer.player.joined"), "tycrek");
-        System.out.printf(getTranslationFormat("chat.type.text"), "tycrek", "hello world");
+        System.out.printf(getTranslationFormat("multiplayer.player.joined") + "%n", "tycrek");
+        System.out.printf(getTranslationFormat("chat.type.text") + "%n", "tycrek", "hello world");
     }
 
     public static String stateToBlock(int state) {
@@ -53,8 +53,7 @@ public class ProtoMapper {
                     .getAsJsonObject("language")
                     .getAsJsonObject(keyParts[0])
                     .get(keyParts[1])
-                    .getAsString()
-                    .concat("%n");
+                    .getAsString();
         } catch (IOException ex) {
             ex.printStackTrace();
             return "";
