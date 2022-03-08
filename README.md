@@ -29,6 +29,8 @@ dependencies {
 
 More to come. For now, get your server jars from https://mcversions.net
 
+This also helps: https://pokechu22.github.io/Burger/1.12.2.json
+
 ## Thanks to
 
 - [@pokechu22] for [Burger] ([source][Burger source])
