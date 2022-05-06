@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class ProtoMapper {
     private final String VERSION;
-    private static final int[] STATES_TO_CHECK = new int[]{0, 1, 66, 256, 500, 3690};
+    private static final int[] STATES_TO_CHECK = new int[]{0, 1, 64, 278, 1496, 2032};
     private static final String MINECRAFT_VERSION_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     private static final String BURGER = "https://pokechu22.github.io/Burger/%s.json";
     private static final String VIAVER = "https://raw.githubusercontent.com/ViaVersion/ViaVersion/master/common/src/main/resources/assets/viaversion/data/mapping-%s.json";
