@@ -21,6 +21,7 @@ import java.util.regex.Pattern;
 public class ProtoMapper {
     private final String VERSION;
     private static final int[] STATES_TO_CHECK = new int[]{0, 1, 64, 278, 1496, 2032};
+    private static final int[] ITEMS_TO_CHECK = new int[]{0, 16, 64, 97, 4448, 7088};
     private static final String MINECRAFT_VERSION_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     private static final String BURGER = "https://pokechu22.github.io/Burger/%s.json";
     private static final String VIAVER = "https://raw.githubusercontent.com/ViaVersion/ViaVersion/master/common/src/main/resources/assets/viaversion/data/mapping-%s.json";
@@ -44,6 +45,11 @@ public class ProtoMapper {
         for (int state : STATES_TO_CHECK)
             System.out.printf("State [%s] is: %s%n", state, pm.stateToBlock(state));
 
+        // Check a few items
+        System.out.println("\nChecking generated items:");
+        for (int item : ITEMS_TO_CHECK)
+            System.out.printf("Item [%s] is: %s%n", item, pm.numericItem(item));
+
         // Check a few translations
         System.out.println("\nChecking generated translations:");
         System.out.printf(pm.getTranslationFormat("multiplayer.player.joined").concat("\n"), "tycrek");
@@ -59,6 +65,17 @@ public class ProtoMapper {
             return newGson()
                     .fromJson(readResourceAsJson(String.format(BLOCKSTATE_MAP, generateShortVersion(this.VERSION))), JsonObject.class)
                     .get(Integer.toString(state))
+                    .getAsString();
+        } catch (IOException | NullPointerException ex) {
+            return "invalid";
+        }
+    }
+
+    public String numericItem(int id) {
+        try {
+            return newGson()
+                    .fromJson(readResourceAsJson(String.format(ITEMS_MAP, generateShortVersion(this.VERSION))), JsonObject.class)
+                    .get(Integer.toString(id))
                     .getAsString();
         } catch (IOException | NullPointerException ex) {
             return "invalid";
