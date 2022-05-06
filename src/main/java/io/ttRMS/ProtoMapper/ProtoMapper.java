@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
 
@@ -16,7 +17,9 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+@RequiredArgsConstructor
 public class ProtoMapper {
+    private final String VERSION;
     private static final int[] STATES_TO_CHECK = new int[]{0, 1, 66, 256, 500, 3690};
     private static final String MINECRAFT_VERSION_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     private static final String BURGER = "https://pokechu22.github.io/Burger/%s.json";
@@ -32,20 +35,25 @@ public class ProtoMapper {
             return;
         }
 
+        var pm = ProtoMapper.Version("1.12.2");
+
         // Check a few states
         System.out.println("Checking generated states:");
         for (int state : STATES_TO_CHECK)
-            System.out.printf("State [%s] is: %s%n", state, stateToBlock(state));
+            System.out.printf("State [%s] is: %s%n", state, pm.stateToBlock(state));
 
-        System.out.printf(getTranslationFormat("multiplayer.player.joined"), "tycrek");
-        System.out.printf(getTranslationFormat("chat.type.text"), "tycrek", "hello world");
+        System.out.printf(pm.getTranslationFormat("multiplayer.player.joined"), "tycrek");
+        System.out.printf(pm.getTranslationFormat("chat.type.text"), "tycrek", "hello world");
     }
 
-    public static String stateToBlock(int state) {
+    public static ProtoMapper Version(String version) {
+        return new ProtoMapper(version);
+    }
+
+    public String stateToBlock(int state) {
         try {
             return newGson()
                     .fromJson(readResourceAsJson(BLOCKSTATE_MAP), JsonObject.class)
-                    .getAsJsonObject("blockstates")
                     .get(Integer.toString(state))
                     .getAsString();
         } catch (IOException ex) {
@@ -54,12 +62,11 @@ public class ProtoMapper {
         }
     }
 
-    public static String getTranslationFormat(String key) {
+    public String getTranslationFormat(String key) {
         try {
             var keyParts = key.split(Pattern.quote("."), 2);
             return newGson()
                     .fromJson(readResourceAsJson(LANGUAGE_MAP), JsonObject.class)
-//                    .getAsJsonObject("language")
                     .getAsJsonObject(keyParts[0])
                     .get(keyParts[1])
                     .getAsString();
@@ -69,7 +76,7 @@ public class ProtoMapper {
         }
     }
 
-    private static void generate() throws IOException {
+    private static void generate() {
         val gson = newGson();
 
         // Get Minecraft version list
@@ -96,7 +103,7 @@ public class ProtoMapper {
                 });
     }
 
-    public static void burger(Gson gson, String version) {
+    private static void burger(Gson gson, String version) {
         // Try to read the file to check if it exits. NPE or IOE will be thrown if it doesn't
         try {
             readResourceAsJson(String.format(LANGUAGE_MAP, version));
@@ -114,7 +121,7 @@ public class ProtoMapper {
         }
     }
 
-    public static void viaver(Gson gson, String version) {
+    private static void viaver(Gson gson, String version) {
         // Try to read the files to check if they exist. NPE or IOE will be thrown if they don't
         boolean blocksExist = true, itemsExist = true;
         //#region boolean try/catch (unnecessarily thicc lines)
