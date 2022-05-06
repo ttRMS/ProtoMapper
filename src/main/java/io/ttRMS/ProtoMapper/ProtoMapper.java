@@ -35,15 +35,19 @@ public class ProtoMapper {
             return;
         }
 
-        var pm = ProtoMapper.Version("1.12.2");
+        var TEST_VERSION = "1.12.2";
+        var pm = ProtoMapper.Version(TEST_VERSION);
+        System.out.printf("%nTesting version: %s%n%n", TEST_VERSION);
 
         // Check a few states
         System.out.println("Checking generated states:");
         for (int state : STATES_TO_CHECK)
             System.out.printf("State [%s] is: %s%n", state, pm.stateToBlock(state));
 
-        System.out.printf(pm.getTranslationFormat("multiplayer.player.joined"), "tycrek");
-        System.out.printf(pm.getTranslationFormat("chat.type.text"), "tycrek", "hello world");
+        // Check a few translations
+        System.out.println("\nChecking generated translations:");
+        System.out.printf(pm.getTranslationFormat("multiplayer.player.joined").concat("\n"), "tycrek");
+        System.out.printf(pm.getTranslationFormat("chat.type.text").concat("\n"), "tycrek", "hello world");
     }
 
     public static ProtoMapper Version(String version) {
@@ -53,12 +57,11 @@ public class ProtoMapper {
     public String stateToBlock(int state) {
         try {
             return newGson()
-                    .fromJson(readResourceAsJson(BLOCKSTATE_MAP), JsonObject.class)
+                    .fromJson(readResourceAsJson(String.format(BLOCKSTATE_MAP, generateShortVersion(this.VERSION))), JsonObject.class)
                     .get(Integer.toString(state))
                     .getAsString();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            return "air";
+        } catch (IOException | NullPointerException ex) {
+            return "invalid";
         }
     }
 
@@ -66,7 +69,7 @@ public class ProtoMapper {
         try {
             var keyParts = key.split(Pattern.quote("."), 2);
             return newGson()
-                    .fromJson(readResourceAsJson(LANGUAGE_MAP), JsonObject.class)
+                    .fromJson(readResourceAsJson(String.format(LANGUAGE_MAP, this.VERSION)), JsonObject.class)
                     .getAsJsonObject(keyParts[0])
                     .get(keyParts[1])
                     .getAsString();
@@ -94,11 +97,10 @@ public class ProtoMapper {
                     burger(gson, version);
 
                     // Remove patch from version
-                    var viaVersion = version.split("\\.");
-                    var viaVersionShort = viaVersion[0] + "." + viaVersion[1];
-                    if (!completedViaShortVersions.contains(viaVersionShort)) {
-                        viaver(gson, viaVersionShort);
-                        completedViaShortVersions.add(viaVersionShort);
+                    var viaVersion = generateShortVersion(version);
+                    if (!completedViaShortVersions.contains(viaVersion)) {
+                        viaver(gson, viaVersion);
+                        completedViaShortVersions.add(viaVersion);
                     }
                 });
     }
@@ -162,6 +164,11 @@ public class ProtoMapper {
     @SneakyThrows
     private static <T> T downloadJson(Gson gson, String url, Class<T> clazz) {
         return gson.fromJson(new InputStreamReader(new URL(url).openConnection().getInputStream()), clazz);
+    }
+
+    private static String generateShortVersion(String version) {
+        var viaVersion = version.split("\\.");
+        return viaVersion[0] + "." + viaVersion[1];
     }
 
     private static void writeToResource(String filename, String json) {
