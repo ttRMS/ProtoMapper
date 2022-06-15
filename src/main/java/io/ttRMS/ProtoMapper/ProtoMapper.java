@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
 public class ProtoMapper {
     private final String VERSION;
     private static final int[] STATES_TO_CHECK = new int[]{0, 1, 64, 278, 1496, 2032};
-    private static final int[] ITEMS_TO_CHECK = new int[]{0, 16, 64, 97, 4448, 7088};
+    private static final int[] ITEMS_TO_CHECK = new int[]{0, 16, 35, 36, 64, 97, 322, 4448, 7088};
     private static final String MINECRAFT_VERSION_MANIFEST = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     private static final String BURGER = "https://pokechu22.github.io/Burger/%s.json";
     private static final String VIAVER = "https://raw.githubusercontent.com/ViaVersion/ViaVersion/master/common/src/main/resources/assets/viaversion/data/mapping-%s.json";
@@ -75,7 +75,7 @@ public class ProtoMapper {
         try {
             return newGson()
                     .fromJson(readResourceAsJson(String.format(ITEMS_MAP, generateShortVersion(this.VERSION))), JsonObject.class)
-                    .get(Integer.toString(id))
+                    .get(Integer.toString(id << 4))
                     .getAsString();
         } catch (IOException | NullPointerException ex) {
             return "invalid";
